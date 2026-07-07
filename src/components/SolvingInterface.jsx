@@ -828,7 +828,12 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
             {currentPuzzle.rating && (
               <span>Rating: <strong style={{color: '#fff'}}>{currentPuzzle.rating}</strong></span>
             )}
-            <span>Puzzle: <strong style={{color: '#fff'}}>{cycle.currentIndex + 1}/{cycle.puzzles.length}</strong></span>
+            <span>Puzzle: <strong style={{color: '#fff'}}>
+              {cycle.isDynamic && (cycle.dynamicLength === 'unlimited' || cycle.puzzles.length === 1000) 
+                ? `${(cycle.sessionOffset || 0) + cycle.currentIndex + 1} / \u221E`
+                : `${cycle.currentIndex + 1}/${cycle.puzzles.length}`
+              }
+            </strong></span>
             <span>Acc: <strong style={{color: '#fff'}}>
               {(() => {
                  const resolvedCount = cycle.currentIndex + (status !== 'playing' ? 1 : 0);

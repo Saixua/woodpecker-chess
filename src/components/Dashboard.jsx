@@ -16,13 +16,17 @@ export default function Dashboard({
   onStartDebug,
   onStartDrillCycle,
   onStartDynamic,
-  profile
+  profile,
+  puzzles,
+  loading
 }) {
   const [mode, setMode] = useState(null);
-  const [puzzles, setPuzzles] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showAbout, setShowAbout] = useState(false);
   const [filteredPuzzlesCount, setFilteredPuzzlesCount] = useState(0);
+  
+  const [dynamicLength, setDynamicLength] = useState(() => {
+    return localStorage.getItem('dynamicLength') || '20';
+  });
   
   // New program state
   const [programName, setProgramName] = useState('');
@@ -118,19 +122,7 @@ export default function Dashboard({
     "Advanced (1800+)"
   ];
 
-  useEffect(() => {
-    fetch('./lichess_puzzles.json')
-      .then(res => res.json())
-      .then(data => {
-        setPuzzles(data);
-        setFilteredPuzzlesCount(data.length);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load puzzles", err);
-        setLoading(false);
-      });
-  }, []);
+
 
   useEffect(() => {
     if (puzzles.length > 0) {
@@ -258,12 +250,29 @@ export default function Dashboard({
             </button>
             
             <button 
-              onClick={() => onStartDynamic(puzzles)}
-              style={{flex: 1, minWidth: '300px', padding: '40px 24px', backgroundColor: '#1a221a', border: '1px solid var(--accent-success)', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(46, 160, 67, 0.15)'}}
+              onClick={() => onStartDynamic(puzzles, dynamicLength)}
+              style={{flex: 1, minWidth: '300px', padding: '40px 24px', backgroundColor: '#1a221a', border: '1px solid var(--accent-success)', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(46, 160, 67, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center'}}
             >
               <Brain size={48} color="var(--accent-success)" style={{marginBottom: '16px'}} />
               <h2 style={{color: '#fff', fontSize: '24px', margin: '0 0 8px 0'}}>Dynamic Coach</h2>
-              <p style={{color: 'var(--text-muted)', margin: 0, fontSize: '14px', lineHeight: '1.4'}}>Just hit start. AI-driven spaced repetition tailored to your current Elo: <strong style={{color: '#fff'}}>{profile?.rating || 1200}</strong></p>
+              <p style={{color: 'var(--text-muted)', margin: 0, fontSize: '14px', lineHeight: '1.4', marginBottom: '24px'}}>Just hit start. AI-driven spaced repetition tailored to your current Elo: <strong style={{color: '#fff'}}>{profile?.rating || 1200}</strong></p>
+              
+              <div style={{marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '8px'}} onClick={(e) => e.stopPropagation()}>
+                 <span style={{color: 'var(--text-muted)', fontSize: '14px'}}>Puzzles:</span>
+                 <select 
+                    value={dynamicLength} 
+                    onChange={(e) => {
+                       setDynamicLength(e.target.value);
+                       localStorage.setItem('dynamicLength', e.target.value);
+                    }}
+                    style={{backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', border: '1px solid var(--accent-success)', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', outline: 'none', fontSize: '14px', fontWeight: 'bold'}}
+                 >
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="unlimited">Unlimited</option>
+                 </select>
+              </div>
             </button>
           </div>
 

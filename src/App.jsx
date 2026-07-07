@@ -7,6 +7,22 @@ function App() {
   const [programs, setPrograms] = useState([]);
   const [activeProgramId, setActiveProgramId] = useState(null); 
   
+  const [puzzles, setPuzzles] = useState([]);
+  const [loadingPuzzles, setLoadingPuzzles] = useState(true);
+
+  useEffect(() => {
+    fetch('./lichess_puzzles.json')
+      .then(res => res.json())
+      .then(data => {
+        setPuzzles(data);
+        setLoadingPuzzles(false);
+      })
+      .catch(err => {
+        console.error("Failed to load puzzles", err);
+        setLoadingPuzzles(false);
+      });
+  }, []);
+  
   const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem('woodpeckerProfile');
     if (saved) return JSON.parse(saved);
@@ -188,16 +204,26 @@ function App() {
   const finishCycle = (finalCycleData) => {
     finalCycleData.completed = true;
     updateProgram(activeProgramId, p => {
-      let newHistory = !finalCycleData.isDebug ? [...p.history, finalCycleData] : p.history;
+      const cycleToSave = { ...finalCycleData };
       if (p.id === 'dynamic_prog') {
-          newHistory = newHistory.slice(-10); // Prevent localStorage quota exceeded
+          cycleToSave.puzzles = []; // Prevent localStorage quota exceeded
+      }
+      let newHistory = !finalCycleData.isDebug ? [...p.history, cycleToSave] : p.history;
+      if (p.id === 'dynamic_prog') {
+          newHistory = newHistory.slice(-10);
       }
       return { ...p, history: newHistory, activeCycle: null };
     });
-    
     if (finalCycleData.isDebug) {
       // Remove debug program entirely after finishing
       setPrograms(prev => prev.filter(p => p.id !== 'debug_prog'));
+    }
+    
+    if (finalCycleData.isDynamic && finalCycleData.dynamicLength === 'unlimited') {
+       setTimeout(() => {
+          startDynamicCycle(puzzles, finalCycleData.dynamicLength, (finalCycleData.sessionOffset || 0) + finalCycleData.puzzles.length);
+       }, 0);
+       return;
     }
     
     setActiveProgramId(null);
@@ -233,7 +259,7 @@ function App() {
     localStorage.setItem('woodpeckerActiveProgramId', programId);
   };
 
-  const startDynamicCycle = (allPuzzles) => {
+  const startDynamicCycle = (allPuzzles, dynamicLength, sessionOffset = 0) => {
     const dueSrs = [];
     const now = Date.now();
     for (const puzzleId in profile.srs) {
@@ -245,8 +271,9 @@ function App() {
     
     dueSrs.sort((a, b) => profile.srs[a].nextReview - profile.srs[b].nextReview);
     
-    const selectedPuzzles = [];
-    const dueIds = new Set(dueSrs.slice(0, 20));
+    let selectedPuzzles = [];
+    const limit = dynamicLength === 'unlimited' ? 1000 : (parseInt(dynamicLength) || 20);
+    const dueIds = new Set(dueSrs.slice(0, limit));
     
     for (const p of allPuzzles) {
        if (dueIds.has(p.puzzle_id)) {
@@ -254,33 +281,33 @@ function App() {
        }
     }
     
-    if (selectedPuzzles.length < 20) {
-       const needed = 20 - selectedPuzzles.length;
+    if (selectedPuzzles.length < limit) {
+       const needed = limit - selectedPuzzles.length;
        const targetRating = profile.rating;
        
        const candidates = allPuzzles.filter(p => !profile.srs[p.puzzle_id] && Math.abs(parseInt(p.rating || 1200) - targetRating) <= 150);
        candidates.sort(() => Math.random() - 0.5);
-       selectedPuzzles.push(...candidates.slice(0, needed));
+       selectedPuzzles = selectedPuzzles.concat(candidates.slice(0, needed));
        
-       if (selectedPuzzles.length < 20) {
-          const neededMore = 20 - selectedPuzzles.length;
+       if (selectedPuzzles.length < limit) {
+          const neededMore = limit - selectedPuzzles.length;
           const moreCandidates = allPuzzles.filter(p => !profile.srs[p.puzzle_id] && !candidates.includes(p) && Math.abs(parseInt(p.rating || 1200) - targetRating) <= 300);
           moreCandidates.sort(() => Math.random() - 0.5);
-          selectedPuzzles.push(...moreCandidates.slice(0, neededMore));
+          selectedPuzzles = selectedPuzzles.concat(moreCandidates.slice(0, neededMore));
        }
        
-       if (selectedPuzzles.length < 20) {
-          const neededFinal = 20 - selectedPuzzles.length;
+       if (selectedPuzzles.length < limit) {
+          const neededFinal = limit - selectedPuzzles.length;
           const finalCandidates = allPuzzles.filter(p => !profile.srs[p.puzzle_id] && !selectedPuzzles.includes(p));
           finalCandidates.sort(() => Math.random() - 0.5);
-          selectedPuzzles.push(...finalCandidates.slice(0, neededFinal));
+          selectedPuzzles = selectedPuzzles.concat(finalCandidates.slice(0, neededFinal));
        }
        
-       if (selectedPuzzles.length < 20) {
+       if (selectedPuzzles.length < limit && selectedPuzzles.length < 20) {
            const neededUltimate = 20 - selectedPuzzles.length;
            const ultimateCandidates = allPuzzles.filter(p => !selectedPuzzles.includes(p));
            ultimateCandidates.sort(() => Math.random() - 0.5);
-           selectedPuzzles.push(...ultimateCandidates.slice(0, neededUltimate));
+           selectedPuzzles = selectedPuzzles.concat(ultimateCandidates.slice(0, neededUltimate));
        }
     }
     
@@ -303,7 +330,9 @@ function App() {
       puzzleTimes: [],
       fails: 0,
       isDebug: false,
-      isDynamic: true
+      isDynamic: true,
+      dynamicLength: dynamicLength,
+      sessionOffset: sessionOffset
     };
     
     if (dynamicProgram) {
@@ -329,6 +358,8 @@ function App() {
       {!activeProgramId && (
         <Dashboard 
           programs={programs}
+          puzzles={puzzles}
+          loading={loadingPuzzles}
           profile={profile}
           onCreateProgram={createProgram}
           onStartNextCycle={startNextCycle}

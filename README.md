@@ -19,3 +19,5 @@ Because this is a Progressive Web App, you can install it directly to your phone
 ## ⚖️ Attribution
 Puzzles are provided by the [Lichess Open Database](https://database.lichess.org/) and are distributed under the Creative Commons license.
 1:11 PM  
+
+ 

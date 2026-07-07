@@ -7,7 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['app-icon.jpg', 'sounds/*.mp3', 'sounds/robot/*.mp3', 'sounds/*.ogg', 'chess-pieces/*.png', 'puzzles.json'],
+      includeAssets: ['app-icon.jpg', 'sounds/*.mp3', 'sounds/robot/*.mp3', 'sounds/*.ogg', 'chess-pieces/*.png', 'lichess_puzzles.json'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000
+      },
       manifest: {
         name: "Woodpecker Chess",
         short_name: "Woodpecker",

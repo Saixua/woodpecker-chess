@@ -184,7 +184,12 @@ div[data-piece]:not([style*="translate"]):hover {
   }
   .sidebar {
     max-width: 100%;
+  }
+  .right-sidebar {
     order: 2;
+  }
+  .left-sidebar {
+    order: 3;
   }
   .main-content {
     order: 1;

@@ -621,43 +621,9 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
   return (
     <div className="app-layout">
       {/* Left Sidebar */}
-      <div className="sidebar">
+      <div className="sidebar left-sidebar">
         <div className="card">
-          <h2 style={{color: '#fff', marginBottom: '8px'}}>Cycle Progress</h2>
-          
-          {cycle.isDynamic && profile && (
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '8px', backgroundColor: 'rgba(46, 160, 67, 0.1)', borderRadius: '4px', border: '1px solid var(--accent-success)'}}>
-              <span style={{color: 'var(--accent-success)', fontWeight: 'bold'}}>Your Elo</span>
-              <span style={{fontWeight: 'bold', color: '#fff'}}>{profile.rating}</span>
-            </div>
-          )}
-
-          {currentPuzzle.rating && (
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '8px', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', border: '1px solid #4a4a4a'}}>
-              <span style={{color: '#aaa', fontWeight: 'bold'}}>Puzzle Rating</span>
-              <span style={{fontWeight: 'bold', color: '#fff'}}>{currentPuzzle.rating}</span>
-            </div>
-          )}
-
-          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-            <span style={{color: 'var(--text-muted)'}}>Puzzle</span>
-            <span style={{fontWeight: 'bold'}}>{cycle.currentIndex + 1} / {cycle.puzzles.length}</span>
-          </div>
-          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-            <span style={{color: 'var(--text-muted)'}}>Accuracy</span>
-            <span style={{fontWeight: 'bold', color: (cycle.fails + (status === 'failed' ? 1 : 0)) > 0 ? 'var(--accent-danger)' : 'var(--accent-success)'}}>
-              {(() => {
-                 const resolvedCount = cycle.currentIndex + (status !== 'playing' ? 1 : 0);
-                 const currentFails = cycle.fails + (status === 'failed' ? 1 : 0);
-                 if (resolvedCount === 0) return 100;
-                 return Math.round(((resolvedCount - currentFails) / resolvedCount) * 100);
-              })()}%
-            </span>
-          </div>
-          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '16px'}}>
-            <span style={{color: 'var(--text-muted)'}}>Total Time</span>
-            <span style={{fontWeight: 'bold', fontFamily: 'monospace', fontSize: '18px'}}>{formatTime(totalTime)}</span>
-          </div>
+          <h2 style={{color: '#fff', marginBottom: '8px'}}>Options</h2>
           
           <details style={{marginBottom: '16px'}}>
             <summary style={{color: '#fff', cursor: 'pointer', padding: '12px 16px', backgroundColor: 'var(--bg-dark)', borderRadius: '4px', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px'}}>
@@ -830,9 +796,9 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
       </div>
 
       {/* Right Sidebar */}
-      <div className="sidebar">
+      <div className="sidebar right-sidebar">
         <div className="card" style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
             <div>
               <h3 style={{color: '#fff', margin: '0 0 4px 0'}}>
                 Current Puzzle {!(currentPuzzle.puzzle_id || currentPuzzle.puzzle_number || currentPuzzle.id)?.toString().startsWith('custom_') && (
@@ -846,6 +812,31 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
               )}
             </div>
             <span style={{fontFamily: 'monospace', fontSize: '20px', color: 'var(--accent-color)'}}>{formatTime(timeSpent)}</span>
+          </div>
+          
+          {/* Sleek Stats Bar */}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'var(--text-muted)', backgroundColor: 'var(--bg-dark)', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--border)', flexWrap: 'wrap', gap: '8px', marginBottom: '16px'}}>
+            {cycle.isDynamic && profile && (
+              <span>Elo: <strong style={{color: '#fff'}}>{profile.rating}</strong>
+                {ratingChange !== null && (
+                  <span style={{marginLeft: '4px', color: ratingChange > 0 ? 'var(--accent-success)' : 'var(--accent-danger)'}}>
+                    {ratingChange > 0 ? `(+${ratingChange})` : `(${ratingChange})`}
+                  </span>
+                )}
+              </span>
+            )}
+            {currentPuzzle.rating && (
+              <span>Rating: <strong style={{color: '#fff'}}>{currentPuzzle.rating}</strong></span>
+            )}
+            <span>Puzzle: <strong style={{color: '#fff'}}>{cycle.currentIndex + 1}/{cycle.puzzles.length}</strong></span>
+            <span>Acc: <strong style={{color: '#fff'}}>
+              {(() => {
+                 const resolvedCount = cycle.currentIndex + (status !== 'playing' ? 1 : 0);
+                 const currentFails = cycle.fails + (status === 'failed' ? 1 : 0);
+                 if (resolvedCount === 0) return 100;
+                 return Math.round(((resolvedCount - currentFails) / resolvedCount) * 100);
+              })()}%
+            </strong></span>
           </div>
           
           {/* Actions */}
@@ -896,12 +887,7 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
                 <>
                   <div style={{textAlign: 'center', color: 'var(--accent-success)', marginBottom: 'auto'}}>
                     <Check size={32} style={{margin: '0 auto'}} />
-                    <h3 style={{marginTop: '4px', marginBottom: ratingChange !== null ? '4px' : '16px'}}>Success!</h3>
-                    {ratingChange !== null && (
-                       <div style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: ratingChange > 0 ? 'var(--accent-success)' : 'var(--accent-danger)'}}>
-                          {ratingChange > 0 ? `+${ratingChange}` : ratingChange} Rating
-                       </div>
-                    )}
+                    <h3 style={{marginTop: '4px', marginBottom: '16px'}}>Success!</h3>
                   </div>
                   
                   <button className="btn-primary" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}} onClick={handleNext}>
@@ -914,12 +900,7 @@ export default function SolvingInterface({ cycle, updateCycle, onFinish, onAbort
                 <>
                   <div style={{textAlign: 'center', color: 'var(--accent-danger)', marginBottom: 'auto'}}>
                     <X size={32} style={{margin: '0 auto'}} />
-                    <h3 style={{marginTop: '4px', marginBottom: ratingChange !== null ? '4px' : '16px'}}>Incorrect</h3>
-                    {ratingChange !== null && (
-                       <div style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--accent-danger)'}}>
-                          {ratingChange} Rating
-                       </div>
-                    )}
+                    <h3 style={{marginTop: '4px', marginBottom: '16px'}}>Incorrect</h3>
                   </div>
                   <button className="btn-primary" style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}} onClick={handleNext}>
                     <SkipForward size={16} /> {isReviewMode ? 'Next' : 'Next Puzzle'}
